@@ -4,9 +4,10 @@ using System.Linq;
 
 public class CorridorsGenerator
 {
-    public List<Node> CreateCorridor(List<RoomNode> allNodesCollection, int corridorWidth)
+    public List<Node> CreateCorridor(List<RoomNode> allNodesCollection, int corridorWidth) // Creates corridors connecting all room nodes
     {
         List<Node> corridorList = new List<Node>();
+        // Queue nodes by tree depth
         Queue<RoomNode> structuresToCheck = new Queue<RoomNode>(
             allNodesCollection.OrderByDescending(node => node.TreeLayerIndex).ToList());
         while (structuresToCheck.Count > 0)

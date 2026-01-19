@@ -2,32 +2,36 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class DungeonCreator : MonoBehaviour
 {
-    [Header("Seed Settings")]
+    [HideInInspector] //Hides the checkbox in the inspector
     public bool useRandomSeed = true;
+
+    [Header("Seed Settings")]
     public int seed = 0;
 
-    [Header("Debug Info")]
-    [SerializeField] private int lastUsedSeed;
+    [SerializeField] private int lastUsedSeed; // Stores the seed used for current dungeon
 
     [Header("Dungeon Settings")]
-    public int dungeonWidth, dungeonLength;
-    public int roomWidthMin, roomLengthMin;
+    public int dungeonWidth;
+    public int dungeonLength;
+    public int roomWidthMin;
+    public int roomLengthMin;
     public int wallHeight = 3;
     public int corridorWidth;
-    public int maxIterations;
-    [Range(0.0f, 0.3f)] // (Just in the Inspector) Adjusts how close to the corner the room's bottom left corner can be
+    public int maxIterations; // How many times to try dividing space
+    [Range(0.0f, 0.3f)] //(Just in the Inspector) Adjusts how close to the corner the room's bottom left corner can be
     public float roomBottomCornerModifier = 0.1f;
-    [Range(0.7f, 1.0f)] // (Just in the Inspector) Adjusts how close to the corner the room's top right corner can be
+    [Range(0.7f, 1.0f)] //(Just in the Inspector) Adjusts how close to the corner the room's top right corner can be
     public float roomTopCornerMidifier = 0.9f;
-    [Range(0, 2)] // (Just in the Inspector) Adjusts how far from the dividing walls the rooms can be placed
+    [Range(0, 2)] //(Just in the Inspector) Adjusts how far from the dividing walls the rooms can be placed
     public int roomOffset = 1;
 
     [Header("Textures")]
-    public Material material;
-    public GameObject wallPrefab;
+    public Material material; // Material for floor
+    public GameObject wallPrefab; // Prefab used to create walls
 
     List<Vector3Int> possibleDoorVerticalPosition;
     List<Vector3Int> possibleDoorHorizontalPosition;
@@ -43,12 +47,13 @@ public class DungeonCreator : MonoBehaviour
     {
         if (useRandomSeed)
         {
-            seed = UnityEngine.Random.Range(0, int.MaxValue);
+            seed = Random.Range(0, int.MaxValue);
         }
 
         lastUsedSeed = seed;
-        UnityEngine.Random.InitState(seed);
+        Random.InitState(seed);
 
+        // Clean up old dungeon
         DestroyAllChildren();
         DugeonGenerator generator = new DugeonGenerator(dungeonWidth, dungeonLength);
         var listOfRooms = generator.CalculateDungeon(
@@ -66,11 +71,19 @@ public class DungeonCreator : MonoBehaviour
         possibleDoorHorizontalPosition = new List<Vector3Int>();
         possibleWallHorizontalPosition = new List<Vector3Int>();
         possibleWallVerticalPosition = new List<Vector3Int>();
-        for (int i = 0; i < listOfRooms.Count; i++)
+
+
+        for (int i = 0; i < listOfRooms.Count; i++) // Create floor mesh for each room
         {
             CreateMesh(listOfRooms[i].BottomLeftAreaCorner, listOfRooms[i].TopRightAreaCorner);
         }
         CreateWalls(wallParent);
+    }
+
+    public void CreateDungeonRandom()
+    {
+        useRandomSeed = true;
+        CreateDungeon();
     }
 
     public void CreateDungeonWithSeed(int specificSeed)
@@ -94,7 +107,7 @@ public class DungeonCreator : MonoBehaviour
         {
             if (!possibleDoorVerticalPosition.Contains(wallPosition))
             {
-                CreateWall(wallParent, wallPosition, 90f);
+                CreateWall(wallParent, wallPosition, 0f);
             }
         }
     }
@@ -117,7 +130,7 @@ public class DungeonCreator : MonoBehaviour
         Vector3 topLeftV = new Vector3(bottomLeftCorner.x, 0, topRightCorner.y);
         Vector3 topRightV = new Vector3(topRightCorner.x, 0, topRightCorner.y);
 
-        Vector3[] vertices = new Vector3[]
+        Vector3[] vertices = new Vector3[]  // Create vertices array for mesh
         {
             topLeftV,
             topRightV,
@@ -125,13 +138,13 @@ public class DungeonCreator : MonoBehaviour
             bottomRightV
         };
 
-        Vector2[] uvs = new Vector2[vertices.Length];
+        Vector2[] uvs = new Vector2[vertices.Length]; // Create UV coordinates for texture mapping
         for (int i = 0; i < uvs.Length; i++)
         {
             uvs[i] = new Vector2(vertices[i].x, vertices[i].z);
         }
 
-        int[] triangles = new int[]
+        int[] triangles = new int[] // Define triangles
         {
             0,
             1,
@@ -140,17 +153,22 @@ public class DungeonCreator : MonoBehaviour
             1,
             3
         };
-        Mesh mesh = new Mesh();
+
+        Mesh mesh = new Mesh(); // Build the mesh
         mesh.vertices = vertices;
         mesh.uv = uvs;
         mesh.triangles = triangles;
 
-        GameObject dungeonFloor = new GameObject("Mesh" + bottomLeftCorner, typeof(MeshFilter), typeof(MeshRenderer));
+        GameObject dungeonFloor = new GameObject("Mesh" + bottomLeftCorner, typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider));
 
         dungeonFloor.transform.position = Vector3.zero;
         dungeonFloor.transform.localScale = Vector3.one;
         dungeonFloor.GetComponent<MeshFilter>().mesh = mesh;
         dungeonFloor.GetComponent<MeshRenderer>().material = material;
+
+        MeshCollider meshCollider = dungeonFloor.GetComponent<MeshCollider>();
+        meshCollider.sharedMesh = mesh;
+
         dungeonFloor.transform.parent = transform;
 
         for (int row = (int)bottomLeftV.x; row <= (int)bottomRightV.x; row++)
@@ -178,7 +196,7 @@ public class DungeonCreator : MonoBehaviour
     private void AddWallPositionToList(Vector3 wallPosition, List<Vector3Int> wallList, List<Vector3Int> doorList)
     {
         Vector3Int point = Vector3Int.CeilToInt(wallPosition);
-        if (wallList.Contains(point))
+        if (wallList.Contains(point)) //Mark possible door position
         {
             doorList.Add(point);
             wallList.Remove(point);
@@ -189,7 +207,7 @@ public class DungeonCreator : MonoBehaviour
         }
     }
 
-    private void DestroyAllChildren()
+    public void DestroyAllChildren() // Remove all child objects
     {
         while (transform.childCount != 0)
         {

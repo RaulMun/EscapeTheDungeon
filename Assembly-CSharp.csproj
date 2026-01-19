@@ -64,7 +64,6 @@
     <Compile Include="Assets\Scripts\DungeonBehavior\RoomGenerator.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\Node.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\Line.cs" />
-    <Compile Include="Assets\Scripts\DungeonBehavior\SeedManager.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\BinarySpacePartitioner.cs" />
     <Compile Include="Assets\_Assets\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\CorridorsGenerator.cs" />
