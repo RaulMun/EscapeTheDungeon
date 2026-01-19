@@ -65,19 +65,16 @@
     <Compile Include="Assets\Scripts\DungeonBehavior\Node.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\Line.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\BinarySpacePartitioner.cs" />
-    <Compile Include="Assets\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\_Assets\Human Animations\Scripts\SpineProxy.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\CorridorsGenerator.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\CorridorNode.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\StructureHelper.cs" />
-    <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\DungeonCreator.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\RoomNode.cs" />
     <Compile Include="Assets\Scripts\DungeonBehavior\DungeonGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\_Assets\kenney_retro-textures-1\License.txt" />
-    <None Include="Assets\_Assets\LB3D\RandomBlocks\Documentation.txt" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

@@ -7,16 +7,18 @@ public class DungeonCreator : MonoBehaviour
 {
     public int dungeonWidth, dungeonLength;
     public int roomWidthMin, roomLengthMin;
+    public int wallHeight = 3;
     public int maxIterations;
     public int corridorWidth;
     public Material material; //Allows the user to set a Material in the Inspector
     [Range(0.0f, 0.3f)] // (Just in the Inspector) Adjusts how close to the corner the room's bottom left corner can be
-    public float roomBottomCornerModifier;
+    public float roomBottomCornerModifier = 0.1f;
     [Range(0.7f, 1.0f)] // (Just in the Inspector) Adjusts how close to the corner the room's top right corner can be
-    public float roomTopCornerMidifier;
+    public float roomTopCornerMidifier = 0.9f;
     [Range(0, 2)] // (Just in the Inspector) Adjusts how far from the dividing walls the rooms can be placed
-    public int roomOffset;
-    public GameObject wallVertical, wallHorizontal;
+    public int roomOffset = 1;
+    public GameObject wallPrefab;
+
     List<Vector3Int> possibleDoorVerticalPosition;
     List<Vector3Int> possibleDoorHorizontalPosition;
     List<Vector3Int> possibleWallHorizontalPosition;
@@ -57,17 +59,30 @@ public class DungeonCreator : MonoBehaviour
     {
         foreach (var wallPosition in possibleWallHorizontalPosition)
         {
-            CreateWall(wallParent, wallPosition, wallHorizontal);
+            if (!possibleDoorHorizontalPosition.Contains(wallPosition))
+            {
+                CreateWall(wallParent, wallPosition, 0f);
+            }
         }
+
         foreach (var wallPosition in possibleWallVerticalPosition)
         {
-            CreateWall(wallParent, wallPosition, wallVertical);
+            if (!possibleDoorVerticalPosition.Contains(wallPosition))
+            {
+                CreateWall(wallParent, wallPosition, 90f);
+            }
         }
     }
 
-    private void CreateWall(GameObject wallParent, Vector3Int wallPosition, GameObject wallPrefab)
+
+    private void CreateWall(GameObject wallParent, Vector3Int wallPosition, float yRotation)
     {
-        Instantiate(wallPrefab, wallPosition, Quaternion.identity, wallParent.transform);
+        Quaternion rotation = Quaternion.Euler(0, yRotation, 0);
+        GameObject wall = Instantiate(wallPrefab, wallPosition, rotation, wallParent.transform);
+
+        Vector3 scale = wall.transform.localScale;
+        scale.y = wallHeight;
+        wall.transform.localScale = scale;
     }
 
     private void CreateMesh(Vector2 bottomLeftCorner, Vector2 topRightCorner)
@@ -113,22 +128,22 @@ public class DungeonCreator : MonoBehaviour
         dungeonFloor.GetComponent<MeshRenderer>().material = material;
         dungeonFloor.transform.parent = transform;
 
-        for (int row = (int)bottomLeftV.x; row < (int)bottomRightV.x; row++)
+        for (int row = (int)bottomLeftV.x; row <= (int)bottomRightV.x; row++)
         {
             var wallPosition = new Vector3(row, 0, bottomLeftV.z);
             AddWallPositionToList(wallPosition, possibleWallHorizontalPosition, possibleDoorHorizontalPosition);
         }
-        for (int row = (int)topLeftV.x; row < (int)topRightCorner.x; row++)
+        for (int row = (int)topLeftV.x; row <= (int)topRightCorner.x; row++)
         {
             var wallPosition = new Vector3(row, 0, topRightV.z);
             AddWallPositionToList(wallPosition, possibleWallHorizontalPosition, possibleDoorHorizontalPosition);
         }
-        for (int col = (int)bottomLeftV.z; col < (int)topLeftV.z; col++)
+        for (int col = (int)bottomLeftV.z; col <= (int)topLeftV.z; col++)
         {
             var wallPosition = new Vector3(bottomLeftV.x, 0, col);
             AddWallPositionToList(wallPosition, possibleWallVerticalPosition, possibleDoorVerticalPosition);
         }
-        for (int col = (int)bottomRightV.z; col < (int)topRightV.z; col++)
+        for (int col = (int)bottomRightV.z; col <= (int)topRightV.z; col++)
         {
             var wallPosition = new Vector3(bottomRightV.x, 0, col);
             AddWallPositionToList(wallPosition, possibleWallVerticalPosition, possibleDoorVerticalPosition);
