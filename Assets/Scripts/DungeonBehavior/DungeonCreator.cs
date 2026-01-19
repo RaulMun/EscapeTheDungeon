@@ -5,18 +5,28 @@ using UnityEngine;
 
 public class DungeonCreator : MonoBehaviour
 {
+    [Header("Seed Settings")]
+    public bool useRandomSeed = true;
+    public int seed = 0;
+
+    [Header("Debug Info")]
+    [SerializeField] private int lastUsedSeed;
+
+    [Header("Dungeon Settings")]
     public int dungeonWidth, dungeonLength;
     public int roomWidthMin, roomLengthMin;
     public int wallHeight = 3;
-    public int maxIterations;
     public int corridorWidth;
-    public Material material; //Allows the user to set a Material in the Inspector
+    public int maxIterations;
     [Range(0.0f, 0.3f)] // (Just in the Inspector) Adjusts how close to the corner the room's bottom left corner can be
     public float roomBottomCornerModifier = 0.1f;
     [Range(0.7f, 1.0f)] // (Just in the Inspector) Adjusts how close to the corner the room's top right corner can be
     public float roomTopCornerMidifier = 0.9f;
     [Range(0, 2)] // (Just in the Inspector) Adjusts how far from the dividing walls the rooms can be placed
     public int roomOffset = 1;
+
+    [Header("Textures")]
+    public Material material;
     public GameObject wallPrefab;
 
     List<Vector3Int> possibleDoorVerticalPosition;
@@ -31,6 +41,14 @@ public class DungeonCreator : MonoBehaviour
 
     public void CreateDungeon()
     {
+        if (useRandomSeed)
+        {
+            seed = UnityEngine.Random.Range(0, int.MaxValue);
+        }
+
+        lastUsedSeed = seed;
+        UnityEngine.Random.InitState(seed);
+
         DestroyAllChildren();
         DugeonGenerator generator = new DugeonGenerator(dungeonWidth, dungeonLength);
         var listOfRooms = generator.CalculateDungeon(
@@ -53,6 +71,13 @@ public class DungeonCreator : MonoBehaviour
             CreateMesh(listOfRooms[i].BottomLeftAreaCorner, listOfRooms[i].TopRightAreaCorner);
         }
         CreateWalls(wallParent);
+    }
+
+    public void CreateDungeonWithSeed(int specificSeed)
+    {
+        useRandomSeed = false;
+        seed = specificSeed;
+        CreateDungeon();
     }
 
     private void CreateWalls(GameObject wallParent)
