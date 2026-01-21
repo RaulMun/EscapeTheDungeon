@@ -30,6 +30,18 @@ public class DungeonCreator : MonoBehaviour
     [Header("Textures")]
     public Material material;
     public GameObject wallPrefab;
+    
+    [Header("Wall Generation")]
+    [Tooltip("Usar sistema de paredes procedurales optimizado (un solo mesh) en lugar de mÃºltiples prefabs")]
+    public bool useProceduralWalls = true;
+    public Material wallMaterial;
+    
+    [Tooltip("AÃ±adir pilares en las esquinas para evitar huecos")]
+    public bool useCornerPillars = true;
+    
+    [Tooltip("TamaÃ±o de los pilares en las esquinas (0.3-0.8 recomendado)")]
+    [Range(0.3f, 1.0f)]
+    public float cornerPillarSize = 0.6f;
 
     [Header("Room Types")]
     public RoomTypeConfiguration roomTypeConfiguration;
@@ -98,7 +110,7 @@ public class DungeonCreator : MonoBehaviour
         {
             CreateMesh(listOfRooms[i].BottomLeftAreaCorner, listOfRooms[i].TopRightAreaCorner);
 
-            // Aplicar prefab de habitación si existe
+            // Aplicar prefab de habitaciï¿½n si existe
             if (listOfRooms[i] is RoomNode roomNode && roomNode.RoomTypeData != null)
             {
                 ApplyRoomPrefab(roomNode, objectParent.transform);
@@ -146,16 +158,16 @@ public class DungeonCreator : MonoBehaviour
     {
         foreach (var room in generator.RoomList)
         {
-            // Spawn objetos específicos del tipo de habitación
+            // Spawn objetos especï¿½ficos del tipo de habitaciï¿½n
             objectSpawner.SpawnObjectsInRoom(room);
 
-            // Spawn objetos genéricos si están configurados
+            // Spawn objetos genï¿½ricos si estï¿½n configurados
             if (genericObjects.Count > 0)
             {
                 objectSpawner.SpawnObjects(room, genericObjects);
             }
 
-            // Spawn especiales según el tipo
+            // Spawn especiales segï¿½n el tipo
             SpawnSpecialObjectsForRoomType(room);
         }
     }
@@ -201,7 +213,7 @@ public class DungeonCreator : MonoBehaviour
         }
     }
 
-    // Métodos originales mantenidos
+    // Mï¿½todos originales mantenidos
     public void CreateDungeonRandom()
     {
         useRandomSeed = true;
@@ -217,19 +229,55 @@ public class DungeonCreator : MonoBehaviour
 
     private void CreateWalls(GameObject wallParent)
     {
-        foreach (var wallPosition in possibleWallHorizontalPosition)
+        if (useProceduralWalls)
         {
-            if (!possibleDoorHorizontalPosition.Contains(wallPosition))
+            // Sistema nuevo: generar un solo mesh optimizado usando el Grid
+            Material matToUse = wallMaterial != null ? wallMaterial : material;
+            ProceduralWallGenerator wallGenerator = new ProceduralWallGenerator(
+                wallHeight, 
+                matToUse, 
+                useCornerPillars, 
+                cornerPillarSize
+            );
+            
+            // Usar el grid directamente para detectar bordes - mÃ¡s confiable
+            if (generator?.Grid != null)
             {
-                CreateWall(wallParent, wallPosition, 0f);
+                GameObject walls = wallGenerator.GenerateWallsFromGrid(
+                    generator.Grid,
+                    wallParent.transform
+                );
+            }
+            else
+            {
+                Debug.LogWarning("Grid no disponible, usando mÃ©todo alternativo");
+                // Fallback al mÃ©todo anterior si no hay grid
+                GameObject walls = wallGenerator.GenerateOptimizedWalls(
+                    possibleWallHorizontalPosition,
+                    possibleWallVerticalPosition,
+                    possibleDoorHorizontalPosition,
+                    possibleDoorVerticalPosition,
+                    wallParent.transform
+                );
             }
         }
-
-        foreach (var wallPosition in possibleWallVerticalPosition)
+        else
         {
-            if (!possibleDoorVerticalPosition.Contains(wallPosition))
+            // Sistema antiguo: usar prefabs individuales
+            foreach (var wallPosition in possibleWallHorizontalPosition)
             {
-                CreateWall(wallParent, wallPosition, 0f);
+                if (!possibleDoorHorizontalPosition.Contains(wallPosition))
+                {
+                    CreateWall(wallParent, wallPosition, 0f);
+                }
+            }
+
+            foreach (var wallPosition in possibleWallVerticalPosition)
+            {
+                if (!possibleDoorVerticalPosition.Contains(wallPosition))
+                {
+                    CreateWall(wallParent, wallPosition, 0f);
+                }
             }
         }
     }
@@ -330,7 +378,7 @@ public class DungeonCreator : MonoBehaviour
         }
     }
 
-    // Métodos públicos para acceder a información del dungeon
+    // Mï¿½todos pï¿½blicos para acceder a informaciï¿½n del dungeon
     public RoomNode GetStartRoom()
     {
         return generator?.GetRoomByType(RoomType.Start);
